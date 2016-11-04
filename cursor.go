@@ -70,6 +70,10 @@ func (c *Cursor) Interface() interface{} {
 	return c.Value().Interface()
 }
 
+func (c *Cursor) String() string {
+	return c.Value().String()
+}
+
 func (c *Cursor) Value() reflect.Value {
 	var value reflect.Value
 

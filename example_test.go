@@ -22,7 +22,11 @@ func ExampleCursor_Index() {
 
 	c = NewCursor(&v)
 	c.Index("results", 0, "name").Set("bar")
+
+	fmt.Println(c.Index("results", 0, "name"))
 	fmt.Printf("%+v\n", v)
 
-	// Output: map[results:[map[name:bar]]]
+	// Output:
+	// bar
+	// map[results:[map[name:bar]]]
 }
