@@ -185,6 +185,15 @@ func (c *Cursor) SetValue(value reflect.Value) {
 	}
 }
 
+func (c *Cursor) Delete() {
+	switch c.parent.Kind() {
+	case reflect.Map:
+		c.SetValue(reflect.Value{})
+	default:
+		c.setEmpty()
+	}
+}
+
 func (c *Cursor) setMap() {
 	c.SetValue(makeMap())
 }

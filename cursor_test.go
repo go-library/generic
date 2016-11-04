@@ -388,9 +388,26 @@ func TestCursor(t *testing.T) {
 		t.Error(err)
 	}
 
+	c.Index("slice", 0).Delete()
+	if err = CheckWithJson(t, `{"slice":[null,true]}`, v); err != nil {
+		t.Error(err)
+	}
+
+	c.Index("slice").Delete()
+	if err = CheckWithJson(t, `{}`, v); err != nil {
+		t.Error(err)
+	}
+
+	c.Delete()
+	if err = CheckWithJson(t, `null`, v); err != nil {
+		t.Error(err)
+	}
+
 	err = Recover(func() {
 		// panic here
 		c.Index(1)
 	})
-	t.Log("Recovered:", err)
+	if err == nil {
+		t.Error("can not get recovered error")
+	}
 }
