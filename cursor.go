@@ -5,6 +5,9 @@ import (
 	"reflect"
 )
 
+type M map[string]interface{}
+type S []interface{}
+
 type Cursor struct {
 	// interface
 	parent reflect.Value
@@ -30,11 +33,12 @@ func (c *Cursor) Index(keys ...interface{}) (nextCursor *Cursor) {
 	for i := range keys {
 		k := reflect.ValueOf(keys[i])
 
-		nextCursor.prepareToNext(nextCursor.Value(), k, false)
+		nextCursor.prepareToNext(nextCursor.Value(), k, false, false)
 		nextCursor.parent = nextCursor.Value()
 		nextCursor.myKey = k
 		if !nextCursor.Value().IsValid() {
-			nextCursor.SetEmpty()
+			panic(fmt.Errorf("key ok value is undefined"))
+			//nextCursor.setEmpty()
 		}
 	}
 
@@ -49,11 +53,11 @@ func (c *Cursor) SetIndex(keys ...interface{}) (nextCursor *Cursor) {
 	for i := range keys {
 		k := reflect.ValueOf(keys[i])
 
-		nextCursor.prepareToNext(nextCursor.Value(), k, true)
+		nextCursor.prepareToNext(nextCursor.Value(), k, true, true)
 		nextCursor.parent = nextCursor.Value()
 		nextCursor.myKey = k
 		if !nextCursor.Value().IsValid() {
-			nextCursor.SetEmpty()
+			nextCursor.setEmpty()
 		}
 	}
 
@@ -150,29 +154,24 @@ func (c *Cursor) Keys() (keys []string) {
 /* SETTERS */
 
 func (c *Cursor) Set(value interface{}) {
+	if value == nil {
+		c.setEmpty()
+		return
+	}
+
+	/*
+		switch v := value.(type) {
+		case M:
+			value = map[string]interface{}(v)
+		case S:
+			value = []interface{}(v)
+		}
+	*/
+
 	c.SetValue(reflect.ValueOf(value))
 }
 
-func (c *Cursor) SetMap() {
-	c.SetValue(makeMap())
-}
-
-func (c *Cursor) SetSlice() {
-	c.SetValue(makeSlice(0, 0))
-}
-
-func (c *Cursor) SetEmpty() {
-	if c.parent.IsValid() {
-		if c.parent.Kind() == reflect.Interface {
-			c.SetValue(reflect.Zero(c.parent.Type()))
-		} else {
-			c.SetValue(reflect.Zero(c.parent.Type().Elem()))
-		}
-	} else {
-		panic(fmt.Errorf("parent value is invalid"))
-	}
-}
-
+/* Set value, low level controllor */
 func (c *Cursor) SetValue(value reflect.Value) {
 	switch c.parent.Kind() {
 	case reflect.Interface:
@@ -186,9 +185,27 @@ func (c *Cursor) SetValue(value reflect.Value) {
 	}
 }
 
-/* HIDDEN FUNCTIONS */
+func (c *Cursor) setMap() {
+	c.SetValue(makeMap())
+}
 
-func (c *Cursor) prepareToNext(value, key reflect.Value, permitCreate bool) {
+func (c *Cursor) setSlice() {
+	c.SetValue(makeSlice(0, 0))
+}
+
+func (c *Cursor) setEmpty() {
+	if c.parent.IsValid() {
+		if c.parent.Kind() == reflect.Interface {
+			c.SetValue(reflect.Zero(c.parent.Type()))
+		} else {
+			c.SetValue(reflect.Zero(c.parent.Type().Elem()))
+		}
+	} else {
+		panic(fmt.Errorf("parent value is invalid"))
+	}
+}
+
+func (c *Cursor) prepareToNext(value, key reflect.Value, permitCreate bool, permitIncrease bool) {
 	var (
 		nextValue reflect.Value
 		isCreated = false
@@ -220,7 +237,7 @@ func (c *Cursor) prepareToNext(value, key reflect.Value, permitCreate bool) {
 		}
 	default:
 		// check override permission
-		panic(fmt.Errorf("key miss matched in value kind"))
+		panic(fmt.Errorf("value is not compatible with key: value:%v - key:%v", vk, kk))
 	}
 
 	switch {
@@ -235,11 +252,17 @@ func (c *Cursor) prepareToNext(value, key reflect.Value, permitCreate bool) {
 		idx := int(key.Int())
 		if idx >= value.Cap() {
 			// check increase permission
+			if !permitIncrease {
+				panic(fmt.Errorf("out of slice capacity"))
+			}
 			nextValue = makeSlice(idx+1, idx+1)
 			reflect.Copy(nextValue, value)
 			isCreated = true
 		} else if idx < value.Cap() && idx >= value.Len() {
 			// check increase permission
+			if !permitIncrease {
+				panic(fmt.Errorf("out of slice length"))
+			}
 			nextValue = value.Slice(0, idx+1)
 			isCreated = true
 		}
@@ -274,6 +297,7 @@ func makeSlice(len int, cap int) reflect.Value {
 			break
 		}
 	}
+
 	var arrayInterface []interface{}
 	return reflect.MakeSlice(reflect.TypeOf(arrayInterface), len, cap)
 }
