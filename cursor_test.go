@@ -387,4 +387,10 @@ func TestCursor(t *testing.T) {
 	if err = CheckWithJson(t, `{"slice":[100,true]}`, v); err != nil {
 		t.Error(err)
 	}
+
+	err = Recover(func() {
+		// panic here
+		c.Index(1)
+	})
+	t.Log("Recovered:", err)
 }
