@@ -65,7 +65,7 @@ func (c *Cursor) SetIndex(keys ...interface{}) (nextCursor *Cursor) {
 /* GETTERS */
 
 func (c *Cursor) Interface() interface{} {
-	if c.Value().Isvalid() {
+	if c.Value().IsValid() {
 		return c.Value().Interface()
 	} else {
 		return nil
