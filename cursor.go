@@ -35,9 +35,10 @@ func (c *Cursor) Index(keys ...interface{}) (nextCursor *Cursor) {
 		nextCursor.prepareToNext(nextCursor.value(), k, false, false)
 		nextCursor.parent = nextCursor.value()
 		nextCursor.myKey = k
-		if !nextCursor.value().IsValid() {
-			panic(Errorf("key is undefined: %v", k))
-		}
+		//if !nextCursor.value().IsValid() {
+		//	panic(Errorf("key is undefined: %v", k))
+		//}
+
 	}
 
 	return nextCursor
