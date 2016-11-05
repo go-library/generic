@@ -5,7 +5,6 @@ import (
 )
 
 type M map[string]interface{}
-
 type S []interface{}
 
 type Cursor struct {
@@ -37,8 +36,7 @@ func (c *Cursor) Index(keys ...interface{}) (nextCursor *Cursor) {
 		nextCursor.parent = nextCursor.Value()
 		nextCursor.myKey = k
 		if !nextCursor.Value().IsValid() {
-			panic(Errorf("key ok value is undefined"))
-			//nextCursor.setEmpty()
+			panic(Errorf("key is undefined: %v", k))
 		}
 	}
 
@@ -162,15 +160,6 @@ func (c *Cursor) Set(value interface{}) {
 		c.setEmpty()
 		return
 	}
-
-	/*
-		switch v := value.(type) {
-		case M:
-			value = map[string]interface{}(v)
-		case S:
-			value = []interface{}(v)
-		}
-	*/
 
 	c.SetValue(reflect.ValueOf(value))
 }
