@@ -55,7 +55,7 @@ func (c *Cursor) SetIndex(keys ...interface{}) (nextCursor *Cursor) {
 		nextCursor.prepareToNext(nextCursor.value(), k, true, true)
 		nextCursor.parent = nextCursor.value()
 		nextCursor.myKey = k
-		if !nextCursor.value().IsValid() {
+		if !nextCursor.IsValid() {
 			nextCursor.setEmpty()
 		}
 	}
@@ -64,7 +64,6 @@ func (c *Cursor) SetIndex(keys ...interface{}) (nextCursor *Cursor) {
 }
 
 /* GETTERS */
-
 func (c *Cursor) Interface() interface{} {
 	if c.value().IsValid() {
 		return c.value().Interface()
@@ -77,7 +76,7 @@ func (c *Cursor) String() string {
 	return c.value().String()
 }
 
-func (c *Cursor) value() reflect.Value {
+func (c *Cursor) getIface() reflect.Value {
 	var value reflect.Value
 
 	switch c.parent.Kind() {
@@ -91,6 +90,16 @@ func (c *Cursor) value() reflect.Value {
 		value = c.parent
 	}
 
+	return value
+}
+
+func (c *Cursor) IsValid() bool {
+	return c.getIface().IsValid()
+}
+
+func (c *Cursor) value() reflect.Value {
+	var value reflect.Value
+	value = c.getIface()
 	if value.Kind() == reflect.Interface {
 		value = value.Elem()
 	}

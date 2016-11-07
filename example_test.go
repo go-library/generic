@@ -1,8 +1,9 @@
-package generic
+package generic_test
 
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/go-library/generic"
 	"log"
 )
 
@@ -10,7 +11,7 @@ func ExampleCursor_Index() {
 	var (
 		err error
 		v   interface{}
-		c   *Cursor
+		c   *generic.Cursor
 	)
 
 	stream := `{"results": [{"name": "foo" }]}`
@@ -20,7 +21,7 @@ func ExampleCursor_Index() {
 		log.Fatal(err)
 	}
 
-	c = NewCursor(&v)
+	c = generic.NewCursor(&v)
 	c.Index("results", 0, "name").Set("bar")
 
 	fmt.Println(c.Index("results", 0, "name"))

@@ -83,13 +83,13 @@ func TestCursor_Set_Interface(t *testing.T) {
 	}
 
 	// map
-	c.Set(M{})
+	c.Set(map[string]interface{}{})
 	if err = CheckWithJson(t, `{}`, v); err != nil {
 		t.Error(err)
 	}
 
 	// slice
-	c.Set(S{})
+	c.Set([]interface{}{})
 	if err = CheckWithJson(t, `[]`, v); err != nil {
 		t.Error(err)
 	}
@@ -109,7 +109,7 @@ func TestCursor_Set_Map(t *testing.T) {
 	}
 
 	// map
-	c.Set(M{})
+	c.Set(map[string]interface{}{})
 	if err = CheckWithJson(t, `{}`, v); err != nil {
 		t.Error(err)
 	}
@@ -145,13 +145,13 @@ func TestCursor_Set_Map(t *testing.T) {
 	}
 
 	// map - map
-	c.SetIndex("value").Set(M{})
+	c.SetIndex("value").Set(map[string]interface{}{})
 	if err = CheckWithJson(t, `{"value":{}}`, v); err != nil {
 		t.Error(err)
 	}
 
 	// map - slice
-	c.SetIndex("value").Set(S{})
+	c.SetIndex("value").Set([]interface{}{})
 	if err = CheckWithJson(t, `{"value":[]}`, v); err != nil {
 		t.Error(err)
 	}
@@ -177,7 +177,7 @@ func TestCursor_Set_Slice(t *testing.T) {
 	}
 
 	// slice
-	c.Set(S{})
+	c.Set([]interface{}{})
 	if err = CheckWithJson(t, `[]`, v); err != nil {
 		t.Error(err)
 	}
@@ -213,13 +213,13 @@ func TestCursor_Set_Slice(t *testing.T) {
 	}
 
 	// slice -map
-	c.SetIndex(0).Set(M{})
+	c.SetIndex(0).Set(map[string]interface{}{})
 	if err = CheckWithJson(t, `[{}]`, v); err != nil {
 		t.Error(err)
 	}
 
 	// slice - slice
-	c.SetIndex(0).Set(S{})
+	c.SetIndex(0).Set([]interface{}{})
 	if err = CheckWithJson(t, `[[]]`, v); err != nil {
 		t.Error(err)
 	}
@@ -238,7 +238,7 @@ func TestCursor_Slice_Increase(t *testing.T) {
 	}
 
 	// slice
-	c.Set(S{})
+	c.Set([]interface{}{})
 	if err = CheckWithJson(t, `[]`, v); err != nil {
 		t.Error(err)
 	}
@@ -272,7 +272,7 @@ func TestCursor_Map_Keys(t *testing.T) {
 	}
 
 	// map
-	c.Set(M{})
+	c.Set(map[string]interface{}{})
 	if err = CheckWithJson(t, `{}`, v); err != nil {
 		t.Error(err)
 	}
@@ -314,7 +314,7 @@ func TestCursor_Push(t *testing.T) {
 	}
 
 	// slice
-	c.Set(S{})
+	c.Set([]interface{}{})
 	if err = CheckWithJson(t, `[]`, v); err != nil {
 		t.Error(err)
 	}
@@ -352,34 +352,8 @@ func TestCursor(t *testing.T) {
 	)
 	// init
 	c = NewCursor(&v)
-	c.Set(M{})
-	c.SetIndex("x").Set(nil)
-	if err = CheckWithJson(t, `{"x":null}`, v); err != nil {
-		t.Error(err)
-	}
-
-	c.Set(S{})
-	c.SetIndex(0).Set(nil)
-	if err = CheckWithJson(t, `[null]`, v); err != nil {
-		t.Error(err)
-	}
-
-	c.Set(M{})
-	if err = CheckWithJson(t, `{}`, v); err != nil {
-		t.Error(err)
-	}
-
-	c.Set(S{})
-	if err = CheckWithJson(t, `[]`, v); err != nil {
-		t.Error(err)
-	}
-	c.SetIndex(1)
-	if err = CheckWithJson(t, `[null,null]`, v); err != nil {
-		t.Error(err)
-	}
-
-	c.Set(M{
-		"slice": S{
+	c.Set(map[string]interface{}{
+		"slice": []interface{}{
 			100,
 			true,
 		},
@@ -388,6 +362,7 @@ func TestCursor(t *testing.T) {
 		t.Error(err)
 	}
 
+	// delete test
 	c.Index("slice", 0).Delete()
 	if err = CheckWithJson(t, `{"slice":[null,true]}`, v); err != nil {
 		t.Error(err)
@@ -403,6 +378,7 @@ func TestCursor(t *testing.T) {
 		t.Error(err)
 	}
 
+	// recover test
 	err = Recover(func() {
 		// panic here
 		c.Index(1)
@@ -410,4 +386,8 @@ func TestCursor(t *testing.T) {
 	if err == nil {
 		t.Error("can not get recovered error")
 	}
+
+	c.Set(map[string]interface{}{})
+	t.Log("Index.......", c.Index("none2").IsValid())
+	t.Log("SetIndex....", c.SetIndex("none2").IsValid())
 }
