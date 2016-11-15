@@ -115,49 +115,49 @@ func TestCursor_Set_Map(t *testing.T) {
 	}
 
 	// map - empty
-	c.SetIndex("value").Set(nil)
+	Must(c.SetIndex("value")).Set(nil)
 	if err = CheckWithJson(t, `{"value":null}`, v); err != nil {
 		t.Error(err)
 	}
 
 	// map - string
-	c.SetIndex("value").Set("string")
+	Must(c.SetIndex("value")).Set("string")
 	if err = CheckWithJson(t, `{"value":"string"}`, v); err != nil {
 		t.Error(err)
 	}
 
 	// map - float
-	c.SetIndex("value").Set(float64(100))
+	Must(c.SetIndex("value")).Set(float64(100))
 	if err = CheckWithJson(t, `{"value":100}`, v); err != nil {
 		t.Error(err)
 	}
 
 	// map - boolean
-	c.SetIndex("value").Set(true)
+	Must(c.SetIndex("value")).Set(true)
 	if err = CheckWithJson(t, `{"value":true}`, v); err != nil {
 		t.Error(err)
 	}
 
 	// map - empty
-	c.SetIndex("value").Set(nil)
+	Must(c.SetIndex("value")).Set(nil)
 	if err = CheckWithJson(t, `{"value":null}`, v); err != nil {
 		t.Error(err)
 	}
 
 	// map - map
-	c.SetIndex("value").Set(map[string]interface{}{})
+	Must(c.SetIndex("value")).Set(map[string]interface{}{})
 	if err = CheckWithJson(t, `{"value":{}}`, v); err != nil {
 		t.Error(err)
 	}
 
 	// map - slice
-	c.SetIndex("value").Set([]interface{}{})
+	Must(c.SetIndex("value")).Set([]interface{}{})
 	if err = CheckWithJson(t, `{"value":[]}`, v); err != nil {
 		t.Error(err)
 	}
 
 	// map - delete
-	c.SetIndex("value").Set(nil)
+	Must(c.SetIndex("value")).Set(nil)
 	if err = CheckWithJson(t, `{"value":null}`, v); err != nil {
 		t.Error(err)
 	}
@@ -183,43 +183,43 @@ func TestCursor_Set_Slice(t *testing.T) {
 	}
 
 	// slice - empty
-	c.SetIndex(0).Set(nil)
+	Must(c.SetIndex(0)).Set(nil)
 	if err = CheckWithJson(t, `[null]`, v); err != nil {
 		t.Error(err)
 	}
 
 	// slice - string
-	c.SetIndex(0).Set("string")
+	Must(c.SetIndex(0)).Set("string")
 	if err = CheckWithJson(t, `["string"]`, v); err != nil {
 		t.Error(err)
 	}
 
 	// slice - float
-	c.SetIndex(0).Set(float64(100))
+	Must(c.SetIndex(0)).Set(float64(100))
 	if err = CheckWithJson(t, `[100]`, v); err != nil {
 		t.Error(err)
 	}
 
 	// slice - boolean
-	c.SetIndex(0).Set(true)
+	Must(c.SetIndex(0)).Set(true)
 	if err = CheckWithJson(t, `[true]`, v); err != nil {
 		t.Error(err)
 	}
 
 	// slice - empty
-	c.SetIndex(0).Set(nil)
+	Must(c.SetIndex(0)).Set(nil)
 	if err = CheckWithJson(t, `[null]`, v); err != nil {
 		t.Error(err)
 	}
 
 	// slice -map
-	c.SetIndex(0).Set(map[string]interface{}{})
+	Must(c.SetIndex(0)).Set(map[string]interface{}{})
 	if err = CheckWithJson(t, `[{}]`, v); err != nil {
 		t.Error(err)
 	}
 
 	// slice - slice
-	c.SetIndex(0).Set([]interface{}{})
+	Must(c.SetIndex(0)).Set([]interface{}{})
 	if err = CheckWithJson(t, `[[]]`, v); err != nil {
 		t.Error(err)
 	}
@@ -245,7 +245,7 @@ func TestCursor_Slice_Increase(t *testing.T) {
 
 	var items []string
 	for i := 0; i < 256; i++ {
-		c.SetIndex(i).Set(float64(i))
+		Must(c.SetIndex(i)).Set(float64(i))
 
 		items = append(items, fmt.Sprintf("%d", i))
 
@@ -338,7 +338,7 @@ func TestCursor_Index(t *testing.T) {
 	}
 
 	// index function test
-	c.SetIndex("a", "b", "c", "d", "e").Set("var")
+	Must(c.SetIndex("a", "b", "c", "d", "e")).Set("var")
 	if err = CheckWithJson(t, `{"a":{"b":{"c":{"d":{"e":"var"}}}}}`, v); err != nil {
 		t.Error(err)
 	}
@@ -363,12 +363,12 @@ func TestCursor(t *testing.T) {
 	}
 
 	// delete test
-	c.Index("slice", 0).Delete()
+	Must(c.Index("slice", 0)).Delete()
 	if err = CheckWithJson(t, `{"slice":[null,true]}`, v); err != nil {
 		t.Error(err)
 	}
 
-	c.Index("slice").Delete()
+	Must(c.Index("slice")).Delete()
 	if err = CheckWithJson(t, `{}`, v); err != nil {
 		t.Error(err)
 	}
@@ -378,16 +378,12 @@ func TestCursor(t *testing.T) {
 		t.Error(err)
 	}
 
-	// recover test
-	err = Recover(func() {
-		// panic here
-		c.Index(1)
-	})
-	if err == nil {
-		t.Error("can not get recovered error")
+	c.Set(map[string]interface{}{})
+	if Must(c.Index("none2")).IsValid() == true {
+		t.Error("this value should be invalid")
 	}
 
-	c.Set(map[string]interface{}{})
-	t.Log("Index.......", c.Index("none2").IsValid())
-	t.Log("SetIndex....", c.SetIndex("none2").IsValid())
+	if Must(c.SetIndex("none2")).IsValid() == false {
+		t.Error("this value should be valid")
+	}
 }

@@ -22,9 +22,9 @@ func ExampleCursor_Index() {
 	}
 
 	c = generic.NewCursor(&v)
-	c.Index("results", 0, "name").Set("bar")
+	generic.Must(c.Index("results", 0, "name")).Set("bar")
 
-	fmt.Println(c.Index("results", 0, "name"))
+	fmt.Println(generic.Must(c.Index("results", 0, "name")))
 	fmt.Printf("%+v\n", v)
 
 	// Output:

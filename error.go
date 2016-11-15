@@ -25,20 +25,3 @@ func Errorf(format string, args ...interface{}) GenericError {
 	}
 	return e
 }
-
-func Recover(fn func()) (err error) {
-	defer func() {
-		r := recover()
-
-		switch r.(type) {
-		case nil:
-		case GenericError:
-			err = r.(error)
-		default:
-			panic(r)
-		}
-	}()
-
-	fn()
-	return nil
-}

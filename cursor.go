@@ -7,6 +7,14 @@ import (
 type M map[string]interface{}
 type S []interface{}
 
+func Must(cur *Cursor, err error) *Cursor {
+	if err != nil {
+		panic(err)
+	}
+
+	return cur
+}
+
 type Cursor struct {
 	// interface
 	parent reflect.Value
@@ -24,7 +32,7 @@ func NewCursor(root *interface{}) *Cursor {
 
 /* ACCESS INDEX ELEMENT, IF NOT EXISTED CREATE OR PANIC */
 
-func (c *Cursor) Index(keys ...interface{}) (nextCursor *Cursor) {
+func (c *Cursor) Index(keys ...interface{}) (nextCursor *Cursor, err error) {
 	nextCursor = new(Cursor)
 	nextCursor.parent = c.parent
 	nextCursor.myKey = c.myKey
@@ -32,19 +40,18 @@ func (c *Cursor) Index(keys ...interface{}) (nextCursor *Cursor) {
 	for i := range keys {
 		k := reflect.ValueOf(keys[i])
 
-		nextCursor.prepareToNext(nextCursor.value(), k, false, false)
+		err = nextCursor.prepareToNext(nextCursor.value(), k, false, false)
+		if err != nil {
+			return nil, err
+		}
 		nextCursor.parent = nextCursor.value()
 		nextCursor.myKey = k
-		//if !nextCursor.value().IsValid() {
-		//	panic(Errorf("key is undefined: %v", k))
-		//}
-
 	}
 
-	return nextCursor
+	return nextCursor, nil
 }
 
-func (c *Cursor) SetIndex(keys ...interface{}) (nextCursor *Cursor) {
+func (c *Cursor) SetIndex(keys ...interface{}) (nextCursor *Cursor, err error) {
 	nextCursor = new(Cursor)
 	nextCursor.parent = c.parent
 	nextCursor.myKey = c.myKey
@@ -52,7 +59,10 @@ func (c *Cursor) SetIndex(keys ...interface{}) (nextCursor *Cursor) {
 	for i := range keys {
 		k := reflect.ValueOf(keys[i])
 
-		nextCursor.prepareToNext(nextCursor.value(), k, true, true)
+		err = nextCursor.prepareToNext(nextCursor.value(), k, true, true)
+		if err != nil {
+			return nil, err
+		}
 		nextCursor.parent = nextCursor.value()
 		nextCursor.myKey = k
 		if !nextCursor.IsValid() {
@@ -60,7 +70,7 @@ func (c *Cursor) SetIndex(keys ...interface{}) (nextCursor *Cursor) {
 		}
 	}
 
-	return nextCursor
+	return nextCursor, nil
 }
 
 /* GETTERS */
@@ -142,6 +152,7 @@ func (c *Cursor) Slice(i, j int) (nextCursor *Cursor) {
 	v := c.value().Slice(i, j)
 	nc := NewCursor(new(interface{}))
 	nc.setValue(v)
+
 	return nc
 }
 
@@ -172,10 +183,9 @@ func (c *Cursor) Keys() (keys []string) {
 func (c *Cursor) Set(value interface{}) {
 	if value == nil {
 		c.setEmpty()
-		return
+	} else {
+		c.setValue(reflect.ValueOf(value))
 	}
-
-	c.setValue(reflect.ValueOf(value))
 }
 
 func (c *Cursor) Delete() {
@@ -220,7 +230,7 @@ func (c *Cursor) setEmpty() {
 	}
 }
 
-func (c *Cursor) prepareToNext(value, key reflect.Value, permitCreate bool, permitIncrease bool) {
+func (c *Cursor) prepareToNext(value, key reflect.Value, permitCreate bool, permitIncrease bool) (err error) {
 	var (
 		nextValue reflect.Value
 		isCreated = false
@@ -233,13 +243,13 @@ func (c *Cursor) prepareToNext(value, key reflect.Value, permitCreate bool, perm
 	switch kk {
 	case reflect.String, reflect.Int:
 	default:
-		panic(Errorf("key should be string or integer"))
+		return Errorf("key should be string or integer")
 	}
 
 	switch vk {
 	case reflect.Map, reflect.Slice, reflect.Invalid:
 	default:
-		panic(Errorf("value should be map, slice or invalid"))
+		return Errorf("value should be map, slice or invalid")
 	}
 
 	switch {
@@ -248,11 +258,11 @@ func (c *Cursor) prepareToNext(value, key reflect.Value, permitCreate bool, perm
 	case vk == reflect.Invalid:
 		// check create permission
 		if !permitCreate {
-			panic(Errorf("implicated creation failure"))
+			return Errorf("implicated creation failure")
 		}
 	default:
 		// check override permission
-		panic(Errorf("value is not compatible with key: value:%v - key:%v", vk, kk))
+		return Errorf("value is not compatible with key: value:%v - key:%v", vk, kk)
 	}
 
 	switch {
@@ -268,7 +278,7 @@ func (c *Cursor) prepareToNext(value, key reflect.Value, permitCreate bool, perm
 		if idx >= value.Cap() {
 			// check increase permission
 			if !permitIncrease {
-				panic(Errorf("out of slice capacity"))
+				return Errorf("out of slice capacity")
 			}
 			nextValue = makeSlice(idx+1, idx+1)
 			reflect.Copy(nextValue, value)
@@ -276,7 +286,7 @@ func (c *Cursor) prepareToNext(value, key reflect.Value, permitCreate bool, perm
 		} else if idx < value.Cap() && idx >= value.Len() {
 			// check increase permission
 			if !permitIncrease {
-				panic(Errorf("out of slice length"))
+				return Errorf("out of slice length")
 			}
 			nextValue = value.Slice(0, idx+1)
 			isCreated = true
@@ -291,6 +301,8 @@ func (c *Cursor) prepareToNext(value, key reflect.Value, permitCreate bool, perm
 	if isCreated {
 		c.setValue(nextValue)
 	}
+
+	return nil
 }
 
 func makeMap() reflect.Value {
